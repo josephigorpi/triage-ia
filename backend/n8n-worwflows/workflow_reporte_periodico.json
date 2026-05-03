@@ -1,0 +1,54 @@
+{
+  "name": "Reporte periódico diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "time": "08:00"
+        }
+      },
+      "id": "schedule-reporte",
+      "name": "Schedule diario 8:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DATE(t.fecha_hora) as fecha, COUNT(*) as total_triajes, SUM(CASE WHEN nivel_urgencia = 'crítico' THEN 1 ELSE 0 END) as criticos, SUM(CASE WHEN nivel_urgencia = 'alto' THEN 1 ELSE 0 END) as altos, SUM(CASE WHEN nivel_urgencia = 'moderado' THEN 1 ELSE 0 END) as moderados, SUM(CASE WHEN nivel_urgencia = 'bajo' THEN 1 ELSE 0 END) as bajos FROM triajes WHERE t.fecha_hora::date = CURRENT_DATE - INTERVAL '1 day' GROUP BY fecha"
+      },
+      "id": "postgres-reporte",
+      "name": "Consultar triajes día anterior",
+      "type": "n8n-nodes-base.postgres",
+      "position": [450, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst fecha = new Date();\nfecha.setDate(fecha.getDate() - 1);\nconst fechaStr = fecha.toISOString().split('T')[0];\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head><meta charset=\"UTF-8\"><title>Reporte Triajes ${fechaStr}</title></head>\n<body>\n<h1>Reporte Diario de Triajes</h1>\n<p>Fecha: ${fechaStr}</p>\n<h2>Resumen</h2>\n<table border=\"1\">\n<tr><th>Nivel</th><th>Cantidad</th></tr>\n<tr><td>Crítico</td><td>${data.criticos || 0}</td></tr>\n<tr><td>Alto</td><td>${data.altos || 0}</td></tr>\n<tr><td>Moderado</td><td>${data.moderados || 0}</td></tr>\n<tr><td>Bajo</td><td>${data.bajos || 0}</td></tr>\n<tr><td><strong>Total</strong></td><td><strong>${data.total_triajes || 0}</strong></td></tr>\n</table>\n</body>\n</html>`;\n\nreturn { json: { html, fecha: fechaStr, total: data.total_triajes || 0 } };"
+      },
+      "id": "code-html",
+      "name": "Generar HTML del reporte",
+      "type": "n8n-nodes-base.code",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reportes@triajeia.com",
+        "toEmail": "gestion@hospital.com",
+        "subject": "=Reporte Diario Triajes - {{$json.fecha}}",
+        "htmlBody": "={{$json.html}}",
+        "attachments": []
+      },
+      "id": "email-reporte",
+      "name": "Enviar reporte por email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [850, 300]
+    }
+  ]
+}

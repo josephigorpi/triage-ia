@@ -7,8 +7,10 @@
         "path": "triaje-creado",
         "responseMode": "responseNode"
       },
+      "id": "webhook-node",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
       "position": [250, 300]
     },
     {
@@ -16,9 +18,17 @@
         "operation": "executeQuery",
         "query": "SELECT p.nombre_completo, t.nivel_urgencia, t.conducta_sugerida FROM triajes t JOIN pacientes p ON t.id_paciente = p.id_paciente WHERE t.id_triaje = {{$json.body.id_triaje}}"
       },
+      "id": "postgres-node",
       "name": "PostgreSQL",
       "type": "n8n-nodes-base.postgres",
-      "position": [450, 300]
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres"
+        }
+      }
     },
     {
       "parameters": {
@@ -32,8 +42,10 @@
           ]
         }
       },
+      "id": "if-node",
       "name": "IF Nivel Alto/Crítico",
       "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
       "position": [650, 300]
     },
     {
@@ -43,9 +55,25 @@
         "subject": "ALERTA: Triaje crítico",
         "text": "Paciente: {{$json.nombre_completo}}\nNivel: {{$json.nivel_urgencia}}\nConducta sugerida: {{$json.conducta_sugerida}}"
       },
+      "id": "email-node",
       "name": "Enviar Email",
       "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
       "position": [850, 300]
     }
-  ]
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "PostgreSQL", "type": "main", "index": 0}]]
+    },
+    "PostgreSQL": {
+      "main": [[{"node": "IF Nivel Alto/Crítico", "type": "main", "index": 0}]]
+    },
+    "IF Nivel Alto/Crítico": {
+      "main": [
+        [{"node": "Enviar Email", "type": "main", "index": 0}],
+        []
+      ]
+    }
+  }
 }

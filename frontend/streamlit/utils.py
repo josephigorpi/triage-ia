@@ -49,13 +49,48 @@ def obtener_pacientes():
 
 def guardar_triaje(data):
     """Guarda un triaje y su resultado IA, retorna id_triaje."""
+
+
+    # DIAGNÓSTICO - Escribir en logs del contenedor
+    import sys
+    print("=== DIAGNÓSTICO ===", file=sys.stderr)
+    for key, val in data.items():
+        print(f"{key}: {val} -> tipo: {type(val)}", file=sys.stderr)
+    print("==================", file=sys.stderr)
+    
+
+
     with get_db_connection() as conn:
         with conn.cursor() as cur:
-            # Convertir valores numpy a tipos nativos de Python
+            # Función de conversión más agresiva
             def to_native(val):
-                if hasattr(val, 'item'):  # Detecta numpy types
-                    return val.item()
+                if val is None:
+                    return None
+                # Convertir numpy types
+                if hasattr(val, 'dtype'):  # Detecta cualquier numpy array/scalar
+                    if 'int' in str(val.dtype):
+                        return int(val)
+                    elif 'float' in str(val.dtype):
+                        return float(val)
+                # Convertir otros tipos numéricos no nativos
+                if isinstance(val, (int, float)):
+                    return val
+                try:
+                    # Intenta convertir a int si es número
+                    if isinstance(val, str) and val.isdigit():
+                        return int(val)
+                except:
+                    pass
                 return val
+            
+            # Extraer valores con conversión explícita
+            id_paciente = to_native(data['id_paciente'])
+            id_usuario = to_native(data['id_usuario'])
+            presion_sist = to_native(data.get('presion_arterial_sist'))
+            presion_diast = to_native(data.get('presion_arterial_diast'))
+            frecuencia = to_native(data.get('frecuencia_cardiaca'))
+            temperatura = to_native(data.get('temperatura'))
+            saturacion = to_native(data.get('saturacion_oxigeno'))
             
             cur.execute("""
                 INSERT INTO triajes (id_paciente, id_usuario, presion_arterial_sist, presion_arterial_diast,
@@ -64,13 +99,13 @@ def guardar_triaje(data):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id_triaje
             """, (
-                to_native(data['id_paciente']),
-                to_native(data['id_usuario']),
-                to_native(data.get('presion_arterial_sist')),
-                to_native(data.get('presion_arterial_diast')),
-                to_native(data.get('frecuencia_cardiaca')),
-                to_native(data.get('temperatura')),
-                to_native(data.get('saturacion_oxigeno')),
+                id_paciente,
+                id_usuario,
+                presion_sist,
+                presion_diast,
+                frecuencia,
+                temperatura,
+                saturacion,
                 data.get('sintomas'),
                 data.get('nivel_urgencia'),
                 data.get('conducta_sugerida')

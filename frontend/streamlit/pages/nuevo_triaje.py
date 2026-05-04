@@ -143,15 +143,21 @@ def show():
                 st.info(f"**Conducta sugerida:** {recomendacion['conducta_sugerida']}")
                 st.write(f"**Diagnósticos diferenciales:** {recomendacion['diagnosticos_diferenciales']}")
 
+                # Función para convertir numpy types a Python nativos
+                def to_python(val):
+                    if hasattr(val, 'item'):
+                        return val.item()
+                    return val
+
                 # Guardar en BD
                 data_guardado = {
-                    'id_paciente': id_paciente,
-                    'id_usuario': st.session_state.user['id_usuario'],
-                    'presion_arterial_sist': presion_sist,
-                    'presion_arterial_diast': presion_diast,
-                    'frecuencia_cardiaca': frecuencia,
-                    'temperatura': temperatura,
-                    'saturacion_oxigeno': saturacion,
+                    'id_paciente': to_python(id_paciente),
+                    'id_usuario': to_python(st.session_state.user['id_usuario']),
+                    'presion_arterial_sist': to_python(presion_sist),
+                    'presion_arterial_diast': to_python(presion_diast),
+                    'frecuencia_cardiaca': to_python(frecuencia),
+                    'temperatura': to_python(temperatura),
+                    'saturacion_oxigeno': to_python(saturacion),
                     'sintomas': sintomas,
                     'nivel_urgencia': recomendacion['nivel_urgencia'],
                     'conducta_sugerida': recomendacion['conducta_sugerida'],

@@ -1,0 +1,100 @@
+{
+  "name": "Sincronización con HCE",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "triaje-creado",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-hce",
+      "name": "Webhook triaje creado",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT t.id_triaje, p.nombre_completo, p.fecha_nacimiento, t.nivel_urgencia, t.conducta_sugerida, t.sintomas, t.frecuencia_cardiaca, t.presion_arterial_sist, t.presion_arterial_diast, t.temperatura, t.saturacion_oxigeno FROM triajes t JOIN pacientes p ON t.id_paciente = p.id_paciente WHERE t.id_triaje = {{$json.body.id_triaje}}"
+      },
+      "id": "postgres-hce",
+      "name": "Obtener datos completos triaje",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const triaje = $input.first().json;\n\nconst payload = {\n  id_externo: triaje.id_triaje,\n  paciente: {\n    nombre: triaje.nombre_completo,\n    fecha_nacimiento: triaje.fecha_nacimiento\n  },\n  triaje: {\n    fecha: new Date().toISOString(),\n    nivel_urgencia: triaje.nivel_urgencia,\n    conducta_sugerida: triaje.conducta_sugerida,\n    sintomas: triaje.sintomas,\n    signos_vitales: {\n      frecuencia_cardiaca: triaje.frecuencia_cardiaca,\n      presion_arterial: `${triaje.presion_arterial_sist}/${triaje.presion_arterial_diast}`,\n      temperatura: triaje.temperatura,\n      saturacion_oxigeno: triaje.saturacion_oxigeno\n    }\n  }\n};\n\nreturn { json: payload };"
+      },
+      "id": "code-hce",
+      "name": "Formatear datos para HCE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://mock-hce:5001/triaje",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id_triaje",
+              "value": "={{$json.id_externo}}"
+            },
+            {
+              "name": "datos",
+              "value": "={{$json.triaje}}"
+            }
+          ]
+        }
+      },
+      "id": "http-hce",
+      "name": "Enviar a Mock HCE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO logs_auditoria (id_usuario, accion, detalles) VALUES (1, 'sincronizacion_hce', 'Triaje {{$json.id_triaje}} enviado a HCE')"
+      },
+      "id": "log-hce",
+      "name": "Registrar en auditoría",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook triaje creado": {
+      "main": [[{"node": "Obtener datos completos triaje", "type": "main", "index": 0}]]
+    },
+    "Obtener datos completos triaje": {
+      "main": [[{"node": "Formatear datos para HCE", "type": "main", "index": 0}]]
+    },
+    "Formatear datos para HCE": {
+      "main": [[{"node": "Enviar a Mock HCE", "type": "main", "index": 0}]]
+    },
+    "Enviar a Mock HCE": {
+      "main": [[{"node": "Registrar en auditoría", "type": "main", "index": 0}]]
+    }
+  }
+}

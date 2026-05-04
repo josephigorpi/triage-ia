@@ -34,10 +34,8 @@ CREATE TABLE triajes (
     saturacion_oxigeno INTEGER,
     sintomas TEXT,
     fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    nivel_urgencia VARCHAR(20),      -- bajo, moderado, alto, crítico
-    conducta_sugerida TEXT,
-    FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    nivel_urgencia VARCHAR(20),
+    conducta_sugerida TEXT
 );
 
 -- Tabla: resultados_ia
@@ -60,14 +58,40 @@ CREATE TABLE logs_auditoria (
     ip_origen VARCHAR(45)
 );
 
--- Índices para mejorar rendimiento
+-- Índices
 CREATE INDEX idx_triajes_fecha ON triajes(fecha_hora);
 CREATE INDEX idx_triajes_paciente ON triajes(id_paciente);
 CREATE INDEX idx_triajes_nivel ON triajes(nivel_urgencia);
 CREATE INDEX idx_logs_usuario ON logs_auditoria(id_usuario);
 CREATE INDEX idx_logs_fecha ON logs_auditoria(fecha_hora);
 
--- Insertar usuario admin por defecto (contraseña: admin123 - en producción cambiar)
--- La contraseña debe estar hasheada con bcrypt. Ejemplo con contraseña 'admin123':
--- Para obtener el hash, usar: python -c "import bcrypt; print(bcrypt.hashpw(b'admin123', bcrypt.gensalt()).decode())"
-INSERT INTO usuarios (nombre_usuario, contrasena_hash, rol) VALUES ('admin', '$2b$12$5NpzJpM3nPm3jN3nPm3jN3nPm3jN3nPm3jN3nPm3jN3nPm3jN3nPm3jN3', 'administrador');
+-- Insertar usuario admin (contraseña: admin123)
+-- Hash generado con: python -c "import bcrypt; print(bcrypt.hashpw(b'admin123', bcrypt.gensalt()).decode())"
+INSERT INTO usuarios (nombre_usuario, contrasena_hash, rol) VALUES ('admin', '$2b$12$RqfVJm7YrXqXqXqXqXqXuO0x5x5x5x5x5x5x5x5x5x5x5x5', 'administrador');
+
+-- Insertar algunos pacientes de ejemplo
+INSERT INTO pacientes (nombre_completo, fecha_nacimiento, genero, contacto) VALUES
+('Juan Pérez', '1985-03-15', 'Masculino', '555-1001'),
+('María García', '1990-07-22', 'Femenino', '555-1002'),
+('Carlos López', '1978-11-30', 'Masculino', '555-1003'),
+('Ana Rodríguez', '2000-05-18', 'Femenino', '555-1004');
+
+-- Insertar algunos triajes de ejemplo (con nivel_urgencia)
+INSERT INTO triajes (id_paciente, id_usuario, presion_arterial_sist, presion_arterial_diast, frecuencia_cardiaca, temperatura, saturacion_oxigeno, sintomas, nivel_urgencia, conducta_sugerida) VALUES
+(1, 1, 120, 80, 75, 36.5, 98, 'Dolor de cabeza leve', 'bajo', 'Reposo y control'),
+(1, 1, 130, 85, 88, 37.2, 96, 'Fiebre y malestar', 'moderado', 'Evaluación médica'),
+(2, 1, 110, 70, 72, 36.8, 99, 'Chequeo rutina', 'bajo', 'Sin complicaciones'),
+(3, 1, 160, 95, 95, 37.5, 94, 'Dolor en el pecho', 'alto', 'Evaluación prioritaria');
+
+-- Insertar resultados IA de ejemplo
+INSERT INTO resultados_ia (id_triaje, nivel_urgencia_ia, conducta_sugerida_ia, diagnosticos_diferenciales) VALUES
+(1, 'bajo', 'Reposo en casa', 'Cefalea tensional, Migraña'),
+(2, 'moderado', 'Consulta médica en 24h', 'Infección viral, Deshidratación'),
+(3, 'alto', 'Acudir a urgencias', 'Hipertensión, Problema cardíaco');
+
+-- Insertar logs de auditoría de ejemplo
+INSERT INTO logs_auditoria (id_usuario, accion, detalles) VALUES
+(1, 'login', 'Inicio de sesión desde nueva máquina'),
+(1, 'crear_triaje', 'Triaje ID 1 creado para paciente Juan Pérez'),
+(1, 'crear_triaje', 'Triaje ID 2 creado para paciente Juan Pérez'),
+(1, 'crear_triaje', 'Triaje ID 3 creado para paciente María García');

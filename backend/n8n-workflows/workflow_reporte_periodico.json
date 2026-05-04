@@ -1,0 +1,68 @@
+{
+  "name": "Reporte periódico diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "time": "08:00"
+        }
+      },
+      "id": "schedule-reporte",
+      "name": "Schedule diario 8:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DATE(fecha_hora) as fecha, COUNT(*) as total_triajes, SUM(CASE WHEN nivel_urgencia = 'crítico' THEN 1 ELSE 0 END) as criticos, SUM(CASE WHEN nivel_urgencia = 'alto' THEN 1 ELSE 0 END) as altos, SUM(CASE WHEN nivel_urgencia = 'moderado' THEN 1 ELSE 0 END) as moderados, SUM(CASE WHEN nivel_urgencia = 'bajo' THEN 1 ELSE 0 END) as bajos FROM triajes WHERE fecha_hora::date = CURRENT_DATE - INTERVAL '1 day' GROUP BY fecha"
+      },
+      "id": "postgres-reporte",
+      "name": "Consultar triajes día anterior",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst fecha = new Date();\nfecha.setDate(fecha.getDate() - 1);\nconst fechaStr = fecha.toISOString().split('T')[0];\n\nconst texto = `REPORTE DIARIO DE TRIAJES - ${fechaStr}\n================================\n\nResumen:\n- Críticos: ${data.criticos || 0}\n- Altos: ${data.altos || 0}\n- Moderados: ${data.moderados || 0}\n- Bajos: ${data.bajos || 0}\n\nTotal de triajes: ${data.total_triajes || 0}`;\n\nreturn [{ json: { texto: texto, fecha: fechaStr } }];"
+      },
+      "id": "code-html",
+      "name": "Generar reporte de texto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reportes@triajeia.com",
+        "toEmail": "gestion@hospital.com",
+        "subject": "Reporte Diario Triajes",
+        "text": "={{$json.texto}}"
+      },
+      "id": "email-node",
+      "name": "Email",
+      "type": "n8n-nodes-base.email",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Schedule diario 8:00 AM": {
+      "main": [[{"node": "Consultar triajes día anterior", "type": "main", "index": 0}]]
+    },
+    "Consultar triajes día anterior": {
+      "main": [[{"node": "Generar reporte de texto", "type": "main", "index": 0}]]
+    },
+    "Generar reporte de texto": {
+      "main": [[{"node": "Email", "type": "main", "index": 0}]]
+    }
+  }
+}

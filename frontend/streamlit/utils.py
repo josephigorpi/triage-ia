@@ -9,10 +9,9 @@ from datetime import datetime
 
 load_dotenv()
 
-# Configuración de la base de datos desde variables de entorno
-# Reemplaza tu bloque actual de DB_CONFIG por este:
+# Prueba de diagnóstico rápida
 if "DB_HOST" in st.secrets:
-    # Configuración para Streamlit Cloud
+    st.write("✅ Secrets detectados") # Esto saldrá en la web
     DB_CONFIG = {
         'host': st.secrets["DB_HOST"],
         'port': st.secrets["DB_PORT"],
@@ -21,7 +20,7 @@ if "DB_HOST" in st.secrets:
         'password': st.secrets["DB_PASSWORD"]
     }
 else:
-    # Configuración para tu PC local (Docker/Local)
+    st.error("❌ No se detectaron Secrets. Usando localhost.") # Esto saldrá en la web
     DB_CONFIG = {
         'host': os.getenv('DB_HOST', 'localhost'),
         'port': os.getenv('DB_PORT', '5432'),

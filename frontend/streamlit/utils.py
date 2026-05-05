@@ -40,8 +40,10 @@ def verificar_usuario(username, password):
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute("SELECT id_usuario, nombre_usuario, contrasena_hash, rol FROM usuarios WHERE nombre_usuario = %s", (username,))
             user = cur.fetchone()
-            if user and bcrypt.checkpw(password.encode('utf-8'), user['contrasena_hash'].encode('utf-8')):
+            # Busca esta línea dentro de verificar_usuario:
+            if user and bcrypt.checkpw(password.encode('utf-8'), user['contrasena_hash'].strip().encode('utf-8')):
                 return dict(user)
+
     return None
 
 def registrar_log(id_usuario, accion, detalles, ip_origen=''):

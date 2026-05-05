@@ -38,17 +38,18 @@ def verificar_usuario(username, password):
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute("SELECT id_usuario, nombre_usuario, contrasena_hash, rol FROM usuarios WHERE nombre_usuario = %s", (username,))
             user = cur.fetchone()
-
-            print(f"DEBUG: Usuario intentando: {username}")
-            print(f"DEBUG: Hash en BD: {user['contrasena_hash']}")
-            print(f"DEBUG: Tipo de hash: {type(user['contrasena_hash'])}")
-
             
-            # Busca esta línea dentro de verificar_usuario:
-            if user and bcrypt.checkpw(password.encode('utf-8'), user['contrasena_hash'].strip().encode('utf-8')):
-                return dict(user)
-
+            if user:
+                stored_hash = user['contrasena_hash']
+                # Si el hash viene como string, lo pasamos a bytes para bcrypt
+                if isinstance(stored_hash, str):
+                    stored_hash = stored_hash.encode('utf-8')
+                
+                # Comparamos
+                if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+                    return dict(user)
     return None
+
 
 def registrar_log(id_usuario, accion, detalles, ip_origen=''):
     """Registra una acción en logs_auditoria."""

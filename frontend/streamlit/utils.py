@@ -10,13 +10,25 @@ from datetime import datetime
 load_dotenv()
 
 # Configuración de la base de datos desde variables de entorno
-DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'port': os.getenv('DB_PORT', '5432'),
-    'database': os.getenv('DB_NAME', 'triaje_ia'),
-    'user': os.getenv('DB_USER', 'postgres'),
-    'password': os.getenv('DB_PASSWORD', 'postgres')
-}
+# Reemplaza tu bloque actual de DB_CONFIG por este:
+if "DB_HOST" in st.secrets:
+    # Configuración para Streamlit Cloud
+    DB_CONFIG = {
+        'host': st.secrets["DB_HOST"],
+        'port': st.secrets["DB_PORT"],
+        'database': st.secrets["DB_NAME"],
+        'user': st.secrets["DB_USER"],
+        'password': st.secrets["DB_PASSWORD"]
+    }
+else:
+    # Configuración para tu PC local (Docker/Local)
+    DB_CONFIG = {
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'port': os.getenv('DB_PORT', '5432'),
+        'database': os.getenv('DB_NAME', 'triaje_ia'),
+        'user': os.getenv('DB_USER', 'postgres'),
+        'password': os.getenv('DB_PASSWORD', 'postgres')
+    }
 
 def get_db_connection():
     """Retorna una conexión a PostgreSQL."""

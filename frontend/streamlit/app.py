@@ -2,6 +2,13 @@ import streamlit as st
 from utils import verificar_usuario, registrar_log
 import pandas as pd
 
+import sys
+import os
+
+# Esto le dice a Python que busque módulos en la raíz del proyecto
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+
 st.set_page_config(page_title="Triaje IA", layout="wide")
 
 # Inicializar estado de sesión

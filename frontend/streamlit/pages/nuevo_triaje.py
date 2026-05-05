@@ -1,3 +1,8 @@
+import sys
+import os
+# Primero el path, luego tus módulos
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
 import streamlit as st
 import pandas as pd
 import requests

@@ -11,7 +11,6 @@ load_dotenv()
 
 # Prueba de diagnóstico rápida
 if "DB_HOST" in st.secrets:
-    st.write("✅ Secrets detectados") # Esto saldrá en la web
     DB_CONFIG = {
         'host': st.secrets["DB_HOST"],
         'port': st.secrets["DB_PORT"],
@@ -20,7 +19,6 @@ if "DB_HOST" in st.secrets:
         'password': st.secrets["DB_PASSWORD"]
     }
 else:
-    st.error("❌ No se detectaron Secrets. Usando localhost.") # Esto saldrá en la web
     DB_CONFIG = {
         'host': os.getenv('DB_HOST', 'localhost'),
         'port': os.getenv('DB_PORT', '5432'),
@@ -28,6 +26,7 @@ else:
         'user': os.getenv('DB_USER', 'postgres'),
         'password': os.getenv('DB_PASSWORD', 'postgres')
     }
+
 
 def get_db_connection():
     """Retorna una conexión a PostgreSQL."""

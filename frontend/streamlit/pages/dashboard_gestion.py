@@ -2,15 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from utils import get_db_connection
-from datetime import datetime
+import datetime  # <--- Cambia 'from datetime import datetime' por esto
+
 
 def show():
     st.title("📈 Dashboard de Gestión")
     
     # Filtros de fecha para análisis histórico
     col_f1, col_f2 = st.columns(2)
-    f_inicio = col_f1.date_input("Fecha Inicio", datetime.today().replace(day=1)) # Primero de este mes
-    f_fin = col_f2.date_input("Fecha Fin", datetime.today())
+    f_inicio = col_f1.date_input("Fecha Inicio", hoy.replace(day=1)) 
+    f_fin = col_f2.date_input("Fecha Fin", hoy)
 
     with get_db_connection() as conn:
         df_base = pd.read_sql("""

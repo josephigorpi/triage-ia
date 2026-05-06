@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from utils import get_db_connection
+from datetime import datetime
 
 def show():
     st.title("📈 Dashboard de Gestión")

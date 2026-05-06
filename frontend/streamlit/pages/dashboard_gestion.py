@@ -10,6 +10,8 @@ def show():
     
     # Filtros de fecha para análisis histórico
     col_f1, col_f2 = st.columns(2)
+
+    hoy = datetime.date.today()
     f_inicio = col_f1.date_input("Fecha Inicio", hoy.replace(day=1)) 
     f_fin = col_f2.date_input("Fecha Fin", hoy)
 

@@ -37,7 +37,7 @@ if not st.session_state.authenticated:
                 st.session_state.user = user
                 registrar_log(user['id_usuario'], "login", "Inicio de sesión exitoso")
                 st.success("Acceso concedido")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
     st.stop()
@@ -54,7 +54,7 @@ if st.sidebar.button("Cerrar sesión"):
     registrar_log(st.session_state.user['id_usuario'], "logout", "Cierre de sesión")
     st.session_state.authenticated = False
     st.session_state.user = None
-    st.experimental_rerun()
+    st.rerun()
 
 # Navegación
 if menu == "Nuevo Triaje":
